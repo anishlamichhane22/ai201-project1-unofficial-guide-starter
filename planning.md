@@ -1,122 +1,70 @@
 # Project 1 Planning: The Unofficial Guide
 
-> Write this document before you write any pipeline code.
-> Your spec and architecture diagram are what you'll use to direct AI tools (Claude, Copilot, etc.) to generate your implementation — the more specific they are, the more useful the generated code will be.
-> Update the Retrieval Approach and Chunking Strategy sections if you change your approach during implementation.
-> Update this file before starting any stretch features.
-
----
-
 ## Domain
-
-<!-- What domain did you choose? Why is this knowledge valuable and hard to find through official channels? -->
-
----
+Student reviews of professors at Huston-Tillotson University (HBCU in Austin, TX). 
+This knowledge is valuable because official course catalogs only list course descriptions 
+and prerequisites — they don't reflect teaching style, exam difficulty, grading fairness, 
+or workload. Students rely on word-of-mouth to make informed decisions about which 
+professors to take, but this knowledge is scattered and hard to find for new students.
 
 ## Documents
 
-<!-- List your specific sources: URLs, subreddit names, forum threads, or file descriptions.
-     Aim for at least 10 sources that together cover different subtopics or perspectives within your domain. -->
-
 | # | Source | Description | URL or location |
 |---|--------|-------------|-----------------|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
-| 6 | | | |
-| 7 | | | |
-| 8 | | | |
-| 9 | | | |
-| 10 | | | |
-
----
+| 1 | Student review | Jose Mauricio Antunez - Programming Foundations | data/prof_antunez.txt |
+| 2 | Student review | Dr. Abina Primo - Java Programming | data/prof_primo.txt |
+| 3 | Student review | Alfredo Tirado-Ramos - Web Programming | data/prof_tirado.txt |
+| 4 | Student review | James Kraft - Health & Wellness | data/prof_kraft.txt |
+| 5 | Student review | Anne Cirella-Urrutia - French | data/prof_cirella.txt |
+| 6 | Student review | Ethan Pena - US History | data/prof_pena.txt |
+| 7 | Student review | Zoe Rodriguez - Freshman Seminar | data/prof_rodriguez.txt |
+| 8 | Student review | Dr. Farzana Hussain - Calculus I | data/prof_hussain.txt |
+| 9 | Student review | Engin Topkara - Physics | data/prof_topkara.txt |
+| 10 | Student review | Alana King - English Composition | data/prof_king.txt |
 
 ## Chunking Strategy
 
-<!-- How will you split documents into chunks?
-     State your chunk size (in tokens or characters), overlap size, and explain why those
-     numbers fit the structure of your documents.
-     A review-heavy corpus warrants different chunking than a long FAQ. -->
+**Chunk size:** 200 characters
 
-**Chunk size:**
+**Overlap:** 20 characters
 
-**Overlap:**
-
-**Reasoning:**
-
----
+**Reasoning:** Our documents are short student reviews, not long guides or articles. 
+Each review is only 3-5 sentences long. Using a small chunk size of 200 characters 
+ensures each chunk captures one focused thought (e.g., exam difficulty or teaching style) 
+without mixing unrelated topics. A small overlap of 20 characters prevents key information 
+from being cut off at chunk boundaries.
 
 ## Retrieval Approach
 
-<!-- Which embedding model are you using (e.g., all-MiniLM-L6-v2 via sentence-transformers)?
-     How many chunks will you retrieve per query (top-k)?
-     If you were deploying this for real users and cost wasn't a constraint, what tradeoffs
-     would you weigh in choosing a different embedding model — context length, multilingual
-     support, accuracy on domain-specific text, latency? -->
+**Embedding model:** all-MiniLM-L6-v2 via sentence-transformers
 
-**Embedding model:**
+**Top-k:** 4
 
-**Top-k:**
-
-**Production tradeoff reflection:**
-
----
+**Production tradeoff reflection:** all-MiniLM-L6-v2 runs locally with no API key or 
+cost, which is ideal for this project. For a real production system I would consider 
+OpenAI's text-embedding-3-small for higher accuracy, or a multilingual model if HT's 
+student body needed support for Spanish speakers. Context length is not a concern here 
+since our chunks are short, but latency would matter at scale — a local model avoids 
+API round-trip delays.
 
 ## Evaluation Plan
 
-<!-- List your 5 test questions with their expected correct answers.
-     Questions should be specific enough that you can judge whether the system's response
-     is right or wrong. "What are good dining halls?" is too vague.
-     "What do students say about wait times at [dining hall name] during lunch?" is testable. -->
-
 | # | Question | Expected answer |
 |---|----------|-----------------|
-| 1 | | |
-| 2 | | |
-| 3 | | |
-| 4 | | |
-| 5 | | |
-
----
+| 1 | What do students say about Antunez's teaching style? | Explains concepts simply, great professor |
+| 2 | How difficult are Dr. Primo's exams? | Exams are very tough, course is challenging |
+| 3 | Is Tirado-Ramos good for beginners in web programming? | Yes, starts from basics, good for beginners |
+| 4 | What is Dr. Hussain's Calculus class like? | Great professor, covers everything, informs about events |
+| 5 | What do students say about the Freshman Seminar? | Very helpful, teaches about campus life, clubs and events |
 
 ## Anticipated Challenges
 
-<!-- What could go wrong? Name at least two specific risks with reasoning.
-     Consider: noisy or inconsistent documents, missing source attribution, off-topic
-     retrieval, chunks that split key information across boundaries. -->
+1. **Short reviews may produce weak embeddings** — since each review is only a few 
+sentences, chunks may not carry enough semantic signal for the embedding model to 
+distinguish between similar queries about different professors.
 
-1.
-
-2.
-
----
+2. **Missing context at chunk boundaries** — if a review mentions a professor's name 
+only at the top and the relevant content is in a later chunk, retrieval may return 
+a chunk without enough context to identify which professor it refers to.
 
 ## Architecture
-
-<!-- Draw a diagram of your pipeline showing the five stages:
-     Document Ingestion → Chunking → Embedding + Vector Store → Retrieval → Generation
-     Label each stage with the tool or library you're using.
-     You can use ASCII art, a Mermaid diagram, or embed a sketch as an image.
-     You'll use this diagram as context when prompting AI tools to implement each stage. -->
-
----
-
-## AI Tool Plan
-
-<!-- For each part of the pipeline below, describe:
-     - Which AI tool you plan to use (Claude, Copilot, ChatGPT, etc.)
-     - What you'll give it as input (which sections of this planning.md, which requirements)
-     - What you expect it to produce
-     - How you'll verify the output matches your spec
-
-     "I'll use AI to help me code" is not a plan.
-     "I'll give Claude my Chunking Strategy section and ask it to implement chunk_text()
-     with my specified chunk size and overlap" is a plan. -->
-
-**Milestone 3 — Ingestion and chunking:**
-
-**Milestone 4 — Embedding and retrieval:**
-
-**Milestone 5 — Generation and interface:**
