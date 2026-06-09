@@ -68,3 +68,32 @@ only at the top and the relevant content is in a later chunk, retrieval may retu
 a chunk without enough context to identify which professor it refers to.
 
 ## Architecture
+
+The pipeline has five stages, each labeled with the tool used:
+
+```
+┌──────────────────┐     ┌──────────────────┐     ┌─────────────────────────┐
+│ 1. INGESTION     │     │ 2. CHUNKING      │     │ 3. EMBEDDING +          │
+│                  │     │                  │     │    VECTOR STORE         │
+│ Load 10 .txt     │ ──▶ │ 200-char chunks, │ ──▶ │ all-MiniLM-L6-v2        │
+│ reviews from     │     │ 20-char overlap  │     │ (sentence-transformers) │
+│ data/; clean     │     │                  │     │ → ChromaDB collection   │
+│ whitespace       │     │ (ingest.py)      │     │ w/ source metadata      │
+│ (ingest.py)      │     │                  │     │ (embed.py)              │
+└──────────────────┘     └──────────────────┘     └────────────┬────────────┘
+                                                                │
+        ┌───────────────────────────────────────────────────────┘
+        ▼
+┌──────────────────────────┐     ┌────────────────────────────────────┐
+│ 4. RETRIEVAL             │     │ 5. GENERATION                       │
+│                          │     │                                     │
+│ Embed query, semantic    │ ──▶ │ Groq llama-3.3-70b-versatile        │
+│ search top_k=4 chunks    │     │ answers using ONLY retrieved chunks │
+│ by cosine distance       │     │ + source attribution; Gradio UI    │
+│ (embed.py: retrieve())   │     │ (app.py)                            │
+└──────────────────────────┘     └────────────────────────────────────┘
+```
+
+**Flow:** User question → embed query (MiniLM) → ChromaDB returns top-4 chunks
+→ chunks injected into a grounding prompt → Groq LLM generates a grounded
+answer → answer + source `.txt` filenames shown in the Gradio interface.

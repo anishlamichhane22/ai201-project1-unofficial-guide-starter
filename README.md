@@ -66,6 +66,38 @@ retrievable from either side.
 
 ---
 
+## Sample Chunks
+
+Five representative chunks produced by `python ingest.py`, each labeled with
+its source document. They show both the strengths and a known weakness of the
+fixed-size character split (see Failure Case Analysis): chunk #3 is a short
+fragment, and chunks #1–#2 carry a few leftover characters from the sliding
+window where a word was cut at the 200-character boundary.
+
+1. **[prof_antunez.txt #0]** — "Professor: Jose Mauricio Antunez / Course:
+   Programming Foundations (COSC-1312-1) / Rating: 5/5 / Review: Great
+   professor. I really liked the way he teaches — he explains concepts clearly
+   and makes them easy"
+2. **[prof_antunez.txt #1]** — "and makes them easy to understand. Exams and
+   assignments were fair and well structured. Took away a lot from this course
+   and learned a lot about programming. Would highly recommend. Professor: Jose
+   M"
+3. **[prof_antunez.txt #2]** — "d. Professor: Jose Mauricio Antunez / Course:
+   Programming Foundations (COSC-1312-1) / Rating: 5/5 / Review: One of the best
+   professors at HT for CS. Very patient and makes sure every student
+   understands bef"
+4. **[prof_antunez.txt #3]** — "dent understands before moving on. Would take
+   again."
+5. **[prof_cirella.txt #0]** — "Professor: Anne V. Cirella-Urrutia / Course:
+   Elementary French I (FREN-1311-2) / Rating: 5/5 / Review: Amazing French
+   class. It was not just about learning the language but also about French
+   culture which m"
+
+Each chunk keeps its source professor and course code at the top, so even a
+mid-review chunk stays attributable to the right document.
+
+---
+
 ## Embedding Model
 
 **Model used:** `all-MiniLM-L6-v2` via the `sentence-transformers` library,
@@ -86,6 +118,39 @@ a concern here since chunks are tiny, but it would matter for longer documents.
 (4) **Latency / local vs. hosted** — the local model avoids API round-trips,
 but a hosted model adds network latency and a per-call cost that scales with
 traffic. For this domain the accuracy gain is the main reason I'd switch.
+
+---
+
+## Retrieval Test Results
+
+Three evaluation queries were run through `retrieve(query, top_k=4)` in
+`embed.py`. In every case the **top-ranked chunk came from the correct
+professor's review file**; off-target files (e.g. `prof_king.txt`) only appeared
+in the lower-ranked slots, which is the fixed-`top_k` behavior discussed in the
+Failure Case Analysis.
+
+**Query 1 — "What do students say about Antunez's teaching style?"**
+Top retrieved chunk (`prof_antunez.txt`): *"Great professor. I really liked the
+way he teaches — he explains concepts clearly and makes them easy [to
+understand]…"*
+*Why relevant:* The query never uses the words in the review, yet semantic
+search matches "teaching style" to text describing **how** he teaches (explains
+clearly, patient, students understand before moving on). This is exactly the
+strength of embedding-based retrieval over keyword search.
+
+**Query 2 — "How difficult are Dr. Primo's exams?"**
+Top retrieved chunk (`prof_primo.txt`): *"Exams are very hard and challenging.
+She is a good teacher but be prepared to study a lot…"*
+*Why relevant:* The chunk directly addresses exam difficulty for the exact
+professor named in the query — both the professor entity and the "difficulty"
+concept match.
+
+**Query 3 — "Is Tirado-Ramos good for beginners in web programming?"**
+Top retrieved chunk (`prof_tirado.txt`): *"Great professor for beginners. Starts
+from scratch so anyone can follow along… Good introduction to web development."*
+*Why relevant:* The query's intent (suitability for beginners) maps onto
+"beginners / starts from scratch / anyone can follow along," and the course
+context (web programming) matches the chunk's domain.
 
 ---
 
@@ -113,6 +178,65 @@ app collects the distinct source filenames from the retrieved chunks (in order,
 de-duplicated) and displays them in a separate "Sources (.txt files used)"
 textbox in the Gradio UI, so the user can see exactly which review files the
 answer was drawn from.
+
+---
+
+## Example Responses
+
+Two in-scope responses (with source attribution visible) and one out-of-scope
+query, captured from the live system.
+
+**In-scope #1**
+Question: *"What do students say about Antunez's teaching style?"*
+Answer: *"Students say Professor Antunez explains concepts clearly and makes
+them easy to understand, is very patient, and ensures every student understands
+before moving on. His exams and assignments are described as fair and
+well-structured, and students highly recommend him."*
+Sources: `prof_antunez.txt`, `prof_king.txt`
+
+**In-scope #2**
+Question: *"How difficult are Dr. Primo's exams?"*
+Answer: *"Dr. Primo's exams are really difficult, very hard and challenging
+according to the reviews. Students are advised to be prepared to study a lot."*
+Sources: `prof_primo.txt`, `prof_antunez.txt`, `prof_pena.txt`
+
+**Out-of-scope (refusal)**
+Question: *"Which dining hall has the best food on campus?"*
+Answer: *"I don't have enough information on that."*
+The corpus contains only professor reviews — no dining content — so the
+grounding instruction in the system prompt (which tells the model to say exactly
+this when the documents don't cover the question) forces a refusal instead of a
+guessed answer from the model's general knowledge.
+
+---
+
+## Query Interface
+
+The interface is a **Gradio web app** (`app.py`), launched with `python app.py`
+and served at `http://localhost:7860`.
+
+**Input field:**
+- *Your question* — a single textbox where the user types a plain-language
+  question. Submitting (Enter) or clicking **Ask** triggers the query.
+
+**Output fields:**
+- *Answer* — a multi-line textbox showing the grounded LLM answer.
+- *Sources (.txt files used)* — a multi-line textbox listing the distinct review
+  files the answer drew from.
+
+**Sample interaction transcript:**
+```
+Your question:  What do students say about the Freshman Seminar?
+
+Answer:         Students say the Freshman Seminar (UNIV-1102-8) with Professor
+                Zoe Rodriguez is "really helpful" and a "must for all freshmen."
+                They learned about the university, clubs, events, resources, and
+                campus life, and describe the professor as very welcoming. Rated
+                5/5.
+
+Sources:        - prof_rodriguez.txt
+                - prof_hussain.txt
+```
 
 ---
 
