@@ -200,13 +200,16 @@ Answer: *"Dr. Primo's exams are really difficult, very hard and challenging
 according to the reviews. Students are advised to be prepared to study a lot."*
 Sources: `prof_primo.txt`, `prof_antunez.txt`, `prof_pena.txt`
 
-**Out-of-scope (refusal)**
+**Out-of-scope (refusal)** — captured from a live run
 Question: *"Which dining hall has the best food on campus?"*
-Answer: *"I don't have enough information on that."*
+Answer: *"I don't have enough information on that. The provided documents do not
+mention dining halls or food options on campus. They appear to be course reviews
+and professor evaluations."*
 The corpus contains only professor reviews — no dining content — so the
-grounding instruction in the system prompt (which tells the model to say exactly
-this when the documents don't cover the question) forces a refusal instead of a
-guessed answer from the model's general knowledge.
+grounding instruction in the system prompt (which tells the model to say "I
+don't have enough information on that" when the documents don't cover the
+question) forces a refusal instead of a guessed answer from the model's general
+knowledge.
 
 ---
 
