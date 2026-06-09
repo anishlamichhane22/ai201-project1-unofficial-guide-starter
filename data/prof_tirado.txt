@@ -1,0 +1,9 @@
+Professor: Alfredo Tirado-Ramos
+Course: Intro to Web Programming (COSC-2327-1)
+Rating: 4.5/5
+Review: Really enjoyed this course. It felt approachable because it starts from the basics, which was great for building a solid foundation. For students with some prior knowledge it moves at a comfortable pace. One of the better CS courses at HT. Would recommend to anyone starting web dev.
+
+Professor: Alfredo Tirado-Ramos
+Course: Intro to Web Programming (COSC-2327-1)
+Rating: 4.5/5
+Review: Great professor for beginners. Starts from scratch so anyone can follow along. Assignments are manageable and he explains everything clearly. Good introduction to web development.
